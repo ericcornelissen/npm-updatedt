@@ -1,0 +1,27 @@
+{
+  "name": "npm-updatedt",
+  "version": "0.1.0",
+  "description": "update transitive dependencies",
+  "homepage": "https://github.com/ericcornelissen/npm-updatedt",
+  "license": "Artistic-2.0",
+
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ericcornelissen/npm-updatedt"
+  },
+  "bugs": {
+    "url": "https://github.com/ericcornelissen/npm-updatedt/issues"
+  },
+  "author":{
+    "name": "Eric Cornelissen",
+    "email": "ericornelissen@gmail.com",
+    "url": "https://ericcornelissen.dev/"
+  },
+  "type": "module",
+  "bin": {
+    "npm-updatedt": "./main.js"
+  },
+  "engines": {
+    "node": "^18 || ^20"
+  }
+}
