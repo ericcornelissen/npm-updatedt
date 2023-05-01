@@ -1,18 +1,21 @@
+// SPDX-License-Identifier: Artistic-2.0
+
 import * as cp from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as process from "node:process";
 
+import meow from "meow";
+
 // -----------------------------------------------------------------------------
 
-const INDEX_NOT_FOUND = -1;
 const UTF8 = "utf-8";
 
 // -----------------------------------------------------------------------------
 
 const EXIT_CODE_SUCCESS = 0;
-const EXIT_CODE_USAGE_ERROR = 1;
-const EXIT_CODE_RUNTIME_ERROR = 2;
+const EXIT_CODE_RUNTIME_ERROR = 1;
+const EXIT_CODE_USAGE_ERROR = 2;
 
 // -----------------------------------------------------------------------------
 
@@ -38,7 +41,7 @@ function updateDependency(name, version, npmArgs) {
     console.log(`Failed to update transitive dependencies of '${name}'.`);
     console.log("Note: this may mean the dependency is currently missing from");
     console.log("      your project. Please check this and act accordingly.");
-    process.exit(EXIT_CODE_USAGE_ERROR);
+    process.exit(EXIT_CODE_RUNTIME_ERROR);
   }
 }
 
@@ -50,68 +53,65 @@ function updateDependencies(dependencies, npmArgs) {
 
 // -----------------------------------------------------------------------------
 
-const FLAG_DEV_ONLY = "--dev-only";
-const FLAG_HELP = "--help";
-const FLAG_MANIFEST = "--manifest";
-const FLAG_PROD_ONLY = "--prod-only";
+const FLAG_HELP = "help";
+const FLAG_MANIFEST = "manifest";
+const FLAG_OMIT = "omit";
+const FLAG_VERSION = "version";
 
-const devOnly = process.argv.indexOf(FLAG_DEV_ONLY) !== INDEX_NOT_FOUND;
-const help = process.argv.indexOf(FLAG_HELP) !== INDEX_NOT_FOUND;
-const manifestFlagIndex = process.argv.indexOf(FLAG_MANIFEST);
-const prodOnly = process.argv.indexOf(FLAG_PROD_ONLY) !== INDEX_NOT_FOUND;
+const OMIT_OPT_DEV = "dev";
+const OMIT_OPT_PROD = "prod";
 
-// -----------------------------------------------------------------------------
+const cli = meow(`
+USAGE
+  $ npm-updatedt [--${FLAG_HELP}] [--${FLAG_VERSION}] [--${FLAG_MANIFEST} PATH]
+    [--${FLAG_OMIT} <${OMIT_OPT_DEV}|${OMIT_OPT_PROD}> [--${FLAG_OMIT} <${OMIT_OPT_DEV}|${OMIT_OPT_PROD}> ...]]
 
-if (help) {
-console.log(`
-Update the transitive dependencies of an npm project.
+OPTIONS
+      --${FLAG_HELP}  Show this help message
+  --${FLAG_MANIFEST}  A path to a 'package.json' file (default './package.json').
+      --${FLAG_OMIT}  Omit the specified type of dependencies (repeatable).
+   --${FLAG_VERSION}  Show the CLI version number.
 
-USAGE:
+EXAMPLES
+  Update all transitive dependencies for the project in the current directory.
+    $ npm-updatedt
 
-  npm-updatedt [${FLAG_MANIFEST} PATH] [${FLAG_PROD_ONLY}|${FLAG_DEV_ONLY}]
-
-FLAGS:
-
-   --dev-only          Update transitive dependencies of devDependencies only.
-       --help          Show this help message.
-   --manifest [PATH]   A path to a 'package.json' file.
-  --prod-only          Update transitive dependencies of dependencies only.
-
-EXAMPLE:
-
-  Update transitive dependencies for the project in the current directory.
-    npm-updatedt
-
-  Update transitive devDependencies for the project in the current directory.
-    npm-updatedt ${FLAG_DEV_ONLY}
+  Update transitive non-devDependencies for the project in the current directory.
+    $ npm-updatedt --${FLAG_OMIT} ${OMIT_OPT_DEV}
 
   Update transitive dependencies in another directory.
-    npm-updatedt ${FLAG_MANIFEST} project/package.json
-`);
-process.exit(EXIT_CODE_SUCCESS);
-}
+    $ npm-updatedt --${FLAG_MANIFEST} project/package.json
+`, {
+  allowUnknownFlags: false,
+  autoHelp: true,
+  autoVersion: true,
+  description: "Update the transitive dependencies of an npm project.",
+  flags: {
+    [FLAG_OMIT]: {
+      type: "string",
+      alias: null,
+      default: null,
+      isMultiple: true,
+      isRequired: false,
+    },
+    [FLAG_MANIFEST]: {
+      type: "string",
+      alias: null,
+      default: "./package.json",
+      isMultiple: false,
+      isRequired: false,
+    },
+  },
+  importMeta: import.meta,
+  inferType: false,
+});
 
 // -----------------------------------------------------------------------------
 
-if (devOnly && prodOnly) {
-  console.error(`Please use either '${FLAG_PROD_ONLY}' or '${FLAG_DEV_ONLY}'.`);
-  process.exit(EXIT_CODE_RUNTIME_ERROR);
-}
+const manifestPath = path.resolve(cli.flags.manifest);
+const projectPath = path.dirname(manifestPath);
 
 // -----------------------------------------------------------------------------
-
-let manifestPath;
-if (manifestFlagIndex === INDEX_NOT_FOUND) {
-  manifestPath = path.resolve(".", "package.json");
-} else {
-  const manifestPathInput = process.argv[manifestFlagIndex + 1];
-  if (manifestPathInput === undefined) {
-    console.error(`The '${FLAG_MANIFEST}' flag must be provided with a value.`);
-    process.exit(EXIT_CODE_RUNTIME_ERROR);
-  }
-
-  manifestPath = path.resolve(".", manifestPathInput);
-}
 
 if (!fs.existsSync(manifestPath)) {
   console.error("No project manifest found.");
@@ -119,21 +119,25 @@ if (!fs.existsSync(manifestPath)) {
   process.exit(EXIT_CODE_USAGE_ERROR);
 }
 
-const projectPath = path.dirname(manifestPath);
+if (!cli.flags.omit.every((omit) => omit === OMIT_OPT_DEV || omit === OMIT_OPT_PROD)) {
+  console.error(`Invalid --${FLAG_OMIT} value.`);
+  console.error(`Must be one of: '${OMIT_OPT_DEV}', '${OMIT_OPT_PROD}'`);
+  process.exit(EXIT_CODE_USAGE_ERROR);
+}
 
 // -----------------------------------------------------------------------------
 
 const manifestRaw = fs.readFileSync(manifestPath, { encoding: UTF8 });
 const manifest = JSON.parse(manifestRaw);
 
-if (!devOnly) {
+if (!cli.flags.omit.includes(OMIT_OPT_PROD)) {
   updateDependencies(manifest.dependencies, []);
 }
 
-if (!prodOnly) {
+if (!cli.flags.omit.includes(OMIT_OPT_DEV)) {
   updateDependencies(manifest.devDependencies, ["--save-dev"]);
 }
 
-console.log();
+console.log(/* newline */);
 console.log("Done.");
 process.exit(EXIT_CODE_SUCCESS);

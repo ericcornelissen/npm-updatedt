@@ -67,3 +67,10 @@ license, see [LICENSE] for the full license text.
 
 [license]: ./LICENSE
 [npm cli]: https://github.com/npm/cli
+
+---
+
+_Content licensed under [CC0]; Code snippets under the [MIT] license._
+
+[cc0]: https://creativecommons.org/publicdomain/zero/1.0/
+[mit]: https://opensource.org/license/mit/
