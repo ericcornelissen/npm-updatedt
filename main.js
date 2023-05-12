@@ -130,11 +130,17 @@ if (!cli.flags.omit.every((omit) => omit === OMIT_OPT_DEV || omit === OMIT_OPT_P
 const manifestRaw = fs.readFileSync(manifestPath, { encoding: UTF8 });
 const manifest = JSON.parse(manifestRaw);
 
-if (!cli.flags.omit.includes(OMIT_OPT_PROD)) {
+if (
+  !cli.flags.omit.includes(OMIT_OPT_PROD) &&
+  manifest.dependencies !== undefined
+) {
   updateDependencies(manifest.dependencies, []);
 }
 
-if (!cli.flags.omit.includes(OMIT_OPT_DEV)) {
+if (
+  !cli.flags.omit.includes(OMIT_OPT_DEV) &&
+  manifest.devDependencies !== undefined
+) {
   updateDependencies(manifest.devDependencies, ["--save-dev"]);
 }
 

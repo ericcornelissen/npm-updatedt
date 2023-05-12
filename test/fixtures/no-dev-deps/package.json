@@ -1,0 +1,6 @@
+{
+  "name": "example-no-dev-deps",
+  "dependencies": {
+    "npm": "^9.6.6"
+  }
+}

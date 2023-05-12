@@ -5,6 +5,11 @@ All notable changes to _npm-updatedt_ will be documented in this file.
 The format is based on [Keep a Changelog], and this project adheres to [Semantic
 Versioning].
 
+## [0.1.2] - 2023-05-12
+
+- Fixed unexpected error when there are no `"dependencies"`.
+- Fixed unexpected error when there are no `"devDependencies"`.
+
 ## [0.1.1] - 2023-05-01
 
 - Added `--omit <dev|prod>` flag (repeatable) with value validation.
