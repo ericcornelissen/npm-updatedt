@@ -2,6 +2,12 @@
 
 An experimental tool for updating transitive npm dependencies.
 
+## Archived note
+
+This project has been archived as it turns out everything I can think of to
+implement is already supported by npm through the [`npm update`] command. If you
+found your way here, check it out instead.
+
 ## Idea
 
 The idea behind this tool is to make it easy to update your project's transitive
@@ -74,3 +80,4 @@ _Content licensed under [CC0]; Code snippets under the [MIT] license._
 
 [cc0]: https://creativecommons.org/publicdomain/zero/1.0/
 [mit]: https://opensource.org/license/mit/
+[`npm update`]: https://docs.npmjs.com/cli/commands/npm-update
